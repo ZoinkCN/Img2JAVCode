@@ -6,6 +6,8 @@ import os
 def Video2Img(videoPath, imgPath, /, *, rename=''):
     vc = cv2.VideoCapture(videoPath)  # 读取视频文件
     imgPath = imgPath.rstrip('/')
+    if not os.path.isdir(imgPath):
+        os.mkdir(imgPath)
     if rename == '':
         video_name = os.path.basename(videoPath)
         video_name = os.path.splitext(video_name)[0]
@@ -19,6 +21,9 @@ def Video2Img(videoPath, imgPath, /, *, rename=''):
     for i in range(time_f):  # 循环读取视频帧
         c = vc.get(cv2.CAP_PROP_POS_FRAMES)
         rval, frame = vc.read()
-        cv2.imwrite(f'{imgPath}/{video_name}.jpg', frame)  # 存储为图像
+        cv2.imwrite(f'{imgPath}/{video_name}_{c}.jpg', frame)  # 存储为图像
         vc.set(cv2.CAP_PROP_POS_FRAMES, c + step)
     vc.release()
+    print(f'-------------------{video_name}--------------------')
+
+Video2Img('video.mp4','imgs')
