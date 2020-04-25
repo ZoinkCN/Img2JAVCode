@@ -1,29 +1,9 @@
-import cv2
-import os
+from ImgEngine_client import ImageEngineClient, data2img
 
-
-# 使用opencv对视频均匀截取图片
-def Video2Img(videoPath, imgPath, /, *, rename=''):
-    vc = cv2.VideoCapture(videoPath)  # 读取视频文件
-    imgPath = imgPath.rstrip('/')
-    if not os.path.isdir(imgPath):
-        os.mkdir(imgPath)
-    if rename == '':
-        video_name = os.path.basename(videoPath)
-        video_name = os.path.splitext(video_name)[0]
-    else:
-        video_name = rename
-    frames = vc.get(cv2.CAP_PROP_FRAME_COUNT)
-    time_f = 10
-    time_f = time_f if frames > time_f else frames   # 视频帧计数间隔频率
-    step = int(frames / time_f)
-
-    for i in range(time_f):  # 循环读取视频帧
-        c = vc.get(cv2.CAP_PROP_POS_FRAMES)
-        rval, frame = vc.read()
-        cv2.imwrite(f'{imgPath}/{video_name}_{c}.jpg', frame)  # 存储为图像
-        vc.set(cv2.CAP_PROP_POS_FRAMES, c + step)
-    vc.release()
-    print(f'-------------------{video_name}--------------------')
-
-Video2Img('video.mp4','imgs')
+client = ImageEngineClient('http://192.168.1.114:9088')
+results = client.search_img(r'E:\z8402\Documents\Python\Test\test_send.jpg')
+message = results[0]['metadata']['message']
+img_data = results[0]['img']
+img = data2img(img_data)
+img.save('test.jpg')
+print(message)
