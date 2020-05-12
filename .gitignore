@@ -3,4 +3,8 @@
 *.mp4
 *.session
 *.txt
+test.*
 /.idea
+/temp
+*.cfg
+*.ini

@@ -22,58 +22,46 @@ class XMLRPCTracebackHandler(SimpleXMLRPCRequestHandler):
             raise
 
 
-__imgs_root = '../Resources/imgs'
+imgs_root = '../Resources/imgs'
 
 
-def add_to_lib(media_path, title):
+def add_to_lib(media_path, message):
     es = Elasticsearch()
     ses = SignatureES(es)
-    if not os.path.isdir(__imgs_root):
-        os.mkdir(__imgs_root)
+    if not os.path.isdir(imgs_root):
+        os.mkdir(imgs_root)
     if not os.path.exists(media_path):
         print(f'"{media_path}" Not exists')
         return
     media_fullname = os.path.basename(media_path)
-    media_name, media_ext = os.path.splitext(media_fullname)
-    pic_exts = ['.jpg', '.png', '.gif']
-    video_exts = ['.mp4', '.avi', '.wmv', '.mkv']
-    if media_ext.lower() in pic_exts:
-        imgs = pic2imgs(media_path)
-    elif media_ext.lower() in video_exts:
-        imgs = video2imgs(media_path)
-    else:
-        imgs = []
-    title_print = title.replace('\n', ' ')
-    print(f'{media_fullname} ---- {title_print}')
+    media_name, _ = os.path.splitext(media_fullname)
+    imgs = media2imgs(media_path)
+    title_print = message.replace('\n', ' ')
+    info = f'{media_fullname} ---- {title_print}'
+    print(info)
     i = 1
     for img in imgs:
         results = ses.search_image(base64.b64decode(img2data(img)), bytestream=True)
         if results and results[0]['dist'] < 0.1:
             continue
-        img_name = f'\t{media_name}_{i}.jpg'
+        img_name = f'\t{abs(hash(message))}_{i}.jpg'
         print(img_name)
-        path = f'{__imgs_root}/{img_name}'
+        path = f'{imgs_root}/{img_name}'
         i += 1
         img.save(path)
-        ses.add_image(path, metadata={'message': title})
+        ses.add_image(path, metadata={'message': message})
     print('')
     try:
         os.remove(media_path)
     except:
         pass
-    return
+    return info
 
 
-def read_data(html_path):
+def read_data(html_path, tags: list = None):
     try:
-        try:
-            html_path = html_path.data
-        except:
-            pass
         file = open('test.txt', 'w', encoding='utf-8')
         file.close()
-        if type(html_path) != str:
-            html_path = html_path.data
         html = open(html_path, 'r', encoding='utf-8')
         html = html.read()
         html = html.replace('<br>', '\n')
@@ -103,7 +91,9 @@ def read_data(html_path):
             if not re.search(f'({str.join("|", title_filter["whitelist"])})', title) \
                     and re.search(f'({str.join("|", title_filter["blacklist"])})', title):
                 skip = True
-                continue
+            elif tags and not re.search(f'({str.join("|", tags)})', title):
+                skip = True
+                print('no tag,skip')
             else:
                 skip = False
             if title != '':
@@ -123,12 +113,11 @@ def read_data(html_path):
         return
 
 
-def search_img(data):
-    try:
-        data = data.data
-    except:
-        pass
-    data = base64.b64decode(data)
+def search_img(file_data, file_format):
+    if file_format == '.jpg':
+        data = base64.b64decode(file_data.data)
+    else:
+        return 'Invalid data format'
     es = Elasticsearch()
     ses = SignatureES(es)
     results = ses.search_image(
@@ -142,21 +131,17 @@ def search_img(data):
     return results
 
 
-def add_data(data, metadata=None):
-    try:
-        data = data.data
-    except:
-        pass
-    data = base64.b64decode(data)
-    if metadata:
-        metadata = metadata.data
-    es = Elasticsearch()
-    ses = SignatureES(es)
-    img = data2img(data)
-    path = f'{__imgs_root}/{abs(hash(data))}.jpg'
-    img.save(path)
-    ses.add_image(path, metadata=metadata)
-    return ''
+def add_data(file, file_format, message):
+    if file_format == '.jpg':
+        temp = data2img(file)
+        file_name = f'{abs(hash(file.data))}{file_format}'
+        file_path = f'temp/{file_name}'
+        temp.save(file_path)
+    elif file_format in ['.gif', '.mp4']:
+        file_path = file
+    else:
+        return 'Invalid data format'
+    return add_to_lib(file_path, message)
 
 
 if __name__ == '__main__':

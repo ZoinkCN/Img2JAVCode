@@ -7,6 +7,19 @@ from PIL import Image, ImageSequence
 from PIL.GifImagePlugin import GifImageFile
 
 
+def media2imgs(media_path):
+    pic_exts = ['.jpg', '.png', '.gif']
+    video_exts = ['.mp4', '.avi', '.wmv', '.mkv']
+    _, media_ext = os.path.splitext(media_path)
+    if media_ext.lower() in pic_exts:
+        imgs = pic2imgs(media_path)
+    elif media_ext.lower() in video_exts:
+        imgs = video2imgs(media_path)
+    else:
+        imgs = []
+    return imgs
+
+
 def pic2imgs(pic_path):
     pic = Image.open(pic_path)
     if not type(pic) == GifImageFile:
@@ -31,10 +44,8 @@ def video2imgs(video_path):
     for _ in range(time_f):  # 循环读取视频帧
         c = vc.get(cv2.CAP_PROP_POS_FRAMES)
         __, frame = vc.read()
-        img = Image.fromarray(frame)
         if frame is not None:
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
+            img = Image.fromarray(frame)
             imgs.append(img)
         vc.set(cv2.CAP_PROP_POS_FRAMES, c + step)
     vc.release()
@@ -50,8 +61,10 @@ def img2data(img):
 
 
 def data2img(data):
-    if type(data) != str:
+    try:
         data = data.data
+    except:
+        pass
     data = base64.b64decode(data)
     image_data = BytesIO(data)
     img = Image.open(image_data)
