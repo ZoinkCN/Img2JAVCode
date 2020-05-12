@@ -46,6 +46,8 @@ def video2imgs(video_path):
         __, frame = vc.read()
         if frame is not None:
             img = Image.fromarray(frame)
+            b, g, r = img.split()
+            img = Image.merge('RGB', (r, g, b))
             imgs.append(img)
         vc.set(cv2.CAP_PROP_POS_FRAMES, c + step)
     vc.release()

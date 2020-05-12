@@ -3,7 +3,6 @@ from configparser import ConfigParser
 from xmlrpc import client
 
 import paramiko
-from PIL.JpegImagePlugin import JpegImageFile
 
 from ImgEngine_pub import *
 
