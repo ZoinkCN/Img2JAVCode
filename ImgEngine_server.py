@@ -67,7 +67,7 @@ def read_data(html_path, tags: list = None):
         html = html.replace('<br>', '\n')
         html = BeautifulSoup(html, 'lxml')
         # html = bs(html)
-        path_root = '../telegramData/'
+        path_root = os.path.dirname(html_path) + '/'
         messages = html.find_all(id=re.compile('message'))
         title = ''
         msg_time = time.strptime('01.01.1970 00:00', '%d.%m.%Y %H:%M')
